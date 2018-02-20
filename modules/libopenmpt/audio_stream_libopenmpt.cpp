@@ -45,15 +45,9 @@ void AudioStreamPlaybackLibopenmpt::_mix_internal(AudioFrame *p_buffer, int p_fr
 		if (start_buffer > 0) {
 			buffer = (buffer + start_buffer * 2);
 		}
-		//int mixed = stb_vorbis_get_samples_float_interleaved(ogg_stream, 2, buffer, todo * 2);
+
 		int mixed = openmpt_module->read_interleaved_stereo(libopenmpt_stream->sample_rate, todo, buffer);
 
-		if (libopenmpt_stream->channels == 1 && mixed > 0) {
-			//mix mono to stereo
-			for (int i = start_buffer; i < mixed; i++) {
-				p_buffer[i].r = p_buffer[i].l;
-			}
-		}
 		todo -= mixed;
 		frames_mixed += mixed;
 
@@ -114,7 +108,7 @@ void AudioStreamPlaybackLibopenmpt::seek(float p_time) {
 	if (!active)
 		return;
 
-	if (p_time >= (float)openmpt_module->get_duration_seconds())
+	if (p_time >= (float)openmpt_module->get_duration_seconds() || p_time < 0)
 		p_time = 0;
 	frames_mixed = uint32_t(get_stream_sampling_rate() * p_time);
 	openmpt_module->set_position_seconds((float)p_time);
@@ -166,6 +160,8 @@ void AudioStreamLibopenmpt::set_data(const PoolVector<uint8_t> &p_data) {
 
 	openmpt::module lom((const uint8_t *)src_datar.ptr(), src_data_len);
 
+	// 48000 @ stereo is the desired output format by libopenmpt
+	// see https://lib.openmpt.org/doc/libopenmpt_cpp_overview.html
 	sample_rate = 48000;
 	channels = 2;
 	length = (float)lom.get_duration_seconds();

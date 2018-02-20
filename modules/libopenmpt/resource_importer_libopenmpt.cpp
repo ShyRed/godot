@@ -45,7 +45,72 @@ String ResourceImporterLibopenmpt::get_visible_name() const {
 }
 void ResourceImporterLibopenmpt::get_recognized_extensions(List<String> *p_extensions) const {
 
+	p_extensions->push_back("669");
+	p_extensions->push_back("amf");
+	p_extensions->push_back("ams");
+	p_extensions->push_back("dbm");
+	p_extensions->push_back("digi");
+	p_extensions->push_back("dmf");
+	p_extensions->push_back("dsm");
+	p_extensions->push_back("dtm");
+	p_extensions->push_back("far");
+	p_extensions->push_back("gdm");
+	p_extensions->push_back("ice");
+	p_extensions->push_back("imf");
+	p_extensions->push_back("it");
+
+	// ITP file format is libopenmpt's own file format. It requires support
+	// for external file access, though. Disabling for now.
+	//p_extensions->push_back("itp");
+
+	// j2b requires zlib or miniz (see https://lib.openmpt.org/doc/dependencies.html)
+#if defined(MPT_WITH_ZLIB) || defined(MPT_WITH_MINIZ)
+	p_extensions->push_back("j2b");
+#endif
+
+	p_extensions->push_back("m15");
+	p_extensions->push_back("mdl");
+	p_extensions->push_back("med");
+
+	// There seems to be some support for midi files in place, but
+	// according to https://lib.openmpt.org/libopenmpt/faq/ its usage
+	// is discouraged. As there are additional dependencies required to
+	// get his to work at all, it is questionable if this is worth the effort.
+	// Disabling midi support for now.
+	//p_extensions->push_back("mid");
+	//p_extensions->push_back("midi");
+
+	p_extensions->push_back("mmcmp");
+	p_extensions->push_back("mms");
+
+	// mo3 requires vorbis (see https://lib.openmpt.org/doc/dependencies.html)
+#if defined(MPT_WITH_VORBIS)
+	p_extensions->push_back("mo3");
+#endif
+
 	p_extensions->push_back("mod");
+	p_extensions->push_back("mptm");
+	p_extensions->push_back("mt2");
+	p_extensions->push_back("mtm");
+	p_extensions->push_back("nst");
+	p_extensions->push_back("okt");
+	p_extensions->push_back("plm");
+	p_extensions->push_back("ppm");
+	p_extensions->push_back("psm");
+	p_extensions->push_back("pt36");
+	p_extensions->push_back("ptm");
+	p_extensions->push_back("s3m");
+	p_extensions->push_back("sfx");
+	p_extensions->push_back("sfx2");
+	p_extensions->push_back("st26");
+	p_extensions->push_back("stk");
+	p_extensions->push_back("stm");
+	p_extensions->push_back("stp");
+	p_extensions->push_back("ult");
+	p_extensions->push_back("umx");
+	p_extensions->push_back("wow");
+	p_extensions->push_back("xm");
+	p_extensions->push_back("xpk");
 }
 
 String ResourceImporterLibopenmpt::get_save_extension() const {
@@ -96,12 +161,23 @@ Error ResourceImporterLibopenmpt::import(const String &p_source_file, const Stri
 
 	memdelete(f);
 
-	Ref<AudioStreamLibopenmpt> libopenmpt_stream;
-	libopenmpt_stream.instance();
-	libopenmpt_stream->set_data(data);
-	libopenmpt_stream->set_loop(loop);
-	libopenmpt_stream->set_loop_offset(loop_offset);
-	return ResourceSaver::save(p_save_path + ".libopenmptstr", libopenmpt_stream);
+	try {
+
+		Ref<AudioStreamLibopenmpt> libopenmpt_stream;
+		libopenmpt_stream.instance();
+		libopenmpt_stream->set_data(data);
+		libopenmpt_stream->set_loop(loop);
+		libopenmpt_stream->set_loop_offset(loop_offset);
+		return ResourceSaver::save(p_save_path + ".libopenmptstr", libopenmpt_stream);
+
+	}
+	catch (const std::exception & e) {
+
+		// libopenmpt throws an exception, if the file/stream format cannot be
+		// loaded.
+		ERR_PRINT(e.what() ? e.what() : "unknown error");
+		return ERR_FILE_CORRUPT;
+	}
 }
 
 ResourceImporterLibopenmpt::ResourceImporterLibopenmpt() {

@@ -31,7 +31,6 @@ if env['builtin_libopenmpt']:
         "common/stdafx.cpp",
         "common/typedefs.cpp",
         "common/version.cpp",
-        "libopenmpt/libopenmpt_c.cpp",
         "libopenmpt/libopenmpt_cxx.cpp",
         "libopenmpt/libopenmpt_ext_impl.cpp",
         "libopenmpt/libopenmpt_impl.cpp",
@@ -145,6 +144,15 @@ if env['builtin_libopenmpt']:
     env_libopenmpt.add_source_files(env.modules_sources, thirdparty_sources)
     env_libopenmpt.Append(CPPPATH=[thirdparty_dir, thirdparty_dir + "/common"])
     env_libopenmpt.Append(CPPDEFINES=['LIBOPENMPT_BUILD', 'LIBOPENMPT_BUILD_SMALL'])
+    
+    # Activate libopenmpt features depending on other activated built_in modules
+    if env['minizip']:
+       	env_libopenmpt.Append(CPPDEFINES=['MPT_WITH_MINIZ'])
+    if env['builtin_zlib']:
+        env_libopenmpt.Append(CPPDEFINES=['MPT_WITH_ZLIB'])
+    if env['builtin_libvorbis'] and env['builtin_libogg']:
+        env_libopenmpt.Append(CPPDEFINES=['MPT_WITH_VORBIS'])
+        env_libopenmpt.Append(CPPPATH=["#thirdparty/libvorbis", "#thirdparty/libogg"])
 
 # Godot source files
 env_libopenmpt.add_source_files(env.modules_sources, "*.cpp")
